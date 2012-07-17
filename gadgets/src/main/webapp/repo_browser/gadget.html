@@ -1,0 +1,53 @@
+<script type="text/javascript">
+    var currentRepository;
+    var detailsElement;
+
+    function makeCMISRequest(url, callback) {
+        var params = {};
+        params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+        gadgets.io.makeRequest(url, callback, params);
+    }
+
+    function handleRepositoryResponse(response) {
+        var html = '',
+            repos = [];
+
+        for (repo in response.data) {
+            var url = response.data[repo].rootFolderUrl;
+            repos.push(url);
+            html = html + '<div><a onclick="currentRepository=' + url +';makeCMISRequest(' + url + ', buildObjectTree)">' + repo + '</a></div>';
+        }
+
+        switch (repos.length) {
+            case 0:
+                detailsElement.innerHTML = "There are no repositories in the configured server";
+                break;
+            case 1:
+                currentRepository = repos[0];
+                makeCMISRequest(repos[0], buildObjectTree);
+                break;
+            default:
+                detailsElement.innerHTML = html;
+        }
+    }
+
+    function buildObjectTree(response) {
+        debugger;
+        var html = '', objects = response.data.objects;
+        for(var i=0; i<objects.length; i++) {
+            html += '<div><a href="' + currentRepository +'?objectId=' + objects[i].object.properties["cmis:objectId"].value + '">' + objects[i].object.properties["cmis:name"].value + '</div>';
+        }
+        detailsElement.innerHTML = html;
+    }
+
+    gadgets.util.registerOnLoadHandler(function () {
+        // Get userprefs
+        var prefs = new gadgets.Prefs();
+        var cmisServer = prefs.getString('cmisServer');
+        detailsElement = document.getElementById('details');
+        makeCMISRequest(cmisServer, handleRepositoryResponse);
+    });
+</script>
+<div id="details">
+
+</div>
