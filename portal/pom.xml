@@ -3,12 +3,23 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
         >
     <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.opensocial</groupId>
+        <artifactId>rave-chemistry</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
 
     <groupId>org.opensocial</groupId>
-    <artifactId>rave-chemistry-gadgets</artifactId>
-    <name>Apache Rave &amp; Chemistry Integration Gadget Hosting</name>
-    <description>Gadget Hosting Module</description>
+    <artifactId>rave-chemistry-portal</artifactId>
+    <name>Apache Rave &amp; Chemistry Integration Portal Overlay</name>
     <packaging>war</packaging>
-    <version>${project.version}</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.rave</groupId>
+            <artifactId>rave-portal</artifactId>
+            <type>war</type>
+        </dependency>
+    </dependencies>
 
 </project>

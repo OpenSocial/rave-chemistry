@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module>
+    <ModulePrefs title="CMIS Sample Gadget">
+    </ModulePrefs>
+    <UserPref name="cmisServer" display_name="CMIS Server Name" required="true" default_value="http://localhost:8080/chemistry/browser"/>
+    <Content type="html"><![CDATA[
+    <script type="text/javascript">
+      function makeCMISRequest(url, callback) {
+        var params = {};
+        params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
+        gadgets.io.makeRequest(url, callback, params);
+      };
+      gadgets.util.registerOnLoadHandler(function(){
+        // Get userprefs
+        var prefs = new gadgets.Prefs();
+        var cmisServer = prefs.getString('cmisServer');
+        makeCMISRequest(cmisServer, function(response) {
+          debugger;
+          var html = '';
+          for(repo in response.data) {
+            html = html + '<div><a href="' + response.data[repo].rootFolderUrl + '">' + repo + '</a></div>';
+          }
+          document.getElementById('details').innerHTML = html;
+        });
+      });
+    </script>
+    <div id="details">
+
+    </div>
+  ]]></Content>
+</Module>
