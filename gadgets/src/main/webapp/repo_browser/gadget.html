@@ -1,11 +1,15 @@
 <script type="text/javascript">
-    var currentRepository;
+    var currentRepo;
     var detailsElement;
 
     function makeCMISRequest(url, callback) {
         var params = {};
         params[gadgets.io.RequestParameters.CONTENT_TYPE] = gadgets.io.ContentType.JSON;
         gadgets.io.makeRequest(url, callback, params);
+    }
+
+    function buildFolderUrl(url, repo) {
+        return '<div><a onclick="makeCMISRequest(' + "'" + url + "'" + ', buildObjectTree)">' + repo + '</a></div>';
     }
 
     function handleRepositoryResponse(response) {
@@ -15,7 +19,8 @@
         for (repo in response.data) {
             var url = response.data[repo].rootFolderUrl;
             repos.push(url);
-            html = html + '<div><a onclick="currentRepository=' + url +';makeCMISRequest(' + url + ', buildObjectTree)">' + repo + '</a></div>';
+            currentRepo = url;
+            html = html + buildFolderUrl(url, repo);
         }
 
         switch (repos.length) {
@@ -23,7 +28,7 @@
                 detailsElement.innerHTML = "There are no repositories in the configured server";
                 break;
             case 1:
-                currentRepository = repos[0];
+                currentRepo = repos[0];
                 makeCMISRequest(repos[0], buildObjectTree);
                 break;
             default:
@@ -32,12 +37,93 @@
     }
 
     function buildObjectTree(response) {
-        debugger;
-        var html = '', objects = response.data.objects;
-        for(var i=0; i<objects.length; i++) {
-            html += '<div><a href="' + currentRepository +'?objectId=' + objects[i].object.properties["cmis:objectId"].value + '">' + objects[i].object.properties["cmis:name"].value + '</div>';
+        var objects = response.data.objects,
+                tree = [];
+        for (var i = 0; i < objects.length; i++) {
+            var node, properties = objects[i].object.properties;
+
+            if (properties["cmis:objectTypeId"].value == "cmis:folder") {
+                node = {
+                    data:{
+                        title:properties["cmis:name"].value
+                    },
+                    attr: { rel:"folder" },
+                    state: "closed"
+                }
+            } else {
+                node = {
+                    data:{
+                        title:properties["cmis:name"].value
+                    },
+                    attr: { rel:"default" }
+                }
+            }
+            tree.push(node);
         }
-        detailsElement.innerHTML = html;
+        $("#details").jstree({
+            "themes" : {
+                "dots" : false
+            },
+            "types":{
+                "max_depth":-2,
+                "max_children":-2,
+                "valid_children":[ "drive", "folder", "default" ],
+                "types":{
+                    "default":{
+                        "valid_children":"none",
+                        "icon":{
+                            "image":"http://static.jstree.com/v.1.0pre/_demo/file.png"
+                        }
+                    },
+                    "folder":{
+                        "valid_children":[ "default", "folder" ],
+                        "icon":{
+                            "image":"http://static.jstree.com/v.1.0pre/_demo/folder.png"
+                        }
+                    },
+                    "drive":{
+                        "valid_children":[ "default", "folder" ],
+                        "icon":{
+                            "image":"http://static.jstree.com/v.1.0pre/_demo/root.png"
+                        },
+                        "start_drag":false,
+                        "move_node":false,
+                        "delete_node":false,
+                        "remove":false
+                    }
+                }
+            },
+            "json_data":{
+                "data":tree,
+                "progressive_render":true,
+                "progressive_unload":true
+            },
+            "plugins":[ "themes", "json_data", "types", "ui" ]
+        }).bind("select_node.jstree", function(e, data){
+                    debugger;
+                });
+
+    }
+
+    /*
+     function buildObjectTree(response) {
+     debugger;
+     var html = '', objects = response.data.objects;
+     for(var i=0; i<objects.length; i++) {
+     var properties = objects[i].object.properties;
+     if(properties["cmis:objectTypeId"].value == "cmis:folder") {
+     html += buildFolderUrl(currentRepo + "/" + properties["cmis:path"].value, properties["cmis:name"].value);
+     } else {
+     html += '<div><a onclick="openUrl(' + "'" + properties["cmis:objectId"].value + "'" + ');">' + properties["cmis:name"].value + '</div>';
+     }
+     }
+     detailsElement.innerHTML = html;
+     }
+     */
+
+    function openUrl(objId) {
+        var url = currentRepo + '?objectId=' + objId;
+        gadgets.views.openUrl(url, null, "dialog");
     }
 
     gadgets.util.registerOnLoadHandler(function () {
@@ -51,3 +137,6 @@
 <div id="details">
 
 </div>
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
+<script type='text/javascript' src="http://static.jstree.com/v.1.0pre/jquery.jstree.js"></script>
+<script type='text/javascript' src="http://static.jstree.com/v.1.0pre/jquery.hotkeys.js"></script>

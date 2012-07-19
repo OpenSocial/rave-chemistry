@@ -3,6 +3,12 @@
     <ModulePrefs title="CMIS Sample Gadget">
         <Require feature="open-views"/>
         <Require feature="dynamic-height"/>
+        <!--
+           js tree pulls in css dynamically via relative path and needs the content to not be rewritten
+        -->
+        <Optional feature="content-rewrite">
+            <Param name="exclude-url">*</Param>
+        </Optional>
     </ModulePrefs>
     <UserPref name="cmisServer" display_name="CMIS Server Name" required="true" default_value="http://localhost:8080/chemistry/browser"/>
     <Content type="html" href="gadget.html" />

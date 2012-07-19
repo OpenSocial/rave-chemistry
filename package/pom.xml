@@ -23,7 +23,7 @@
         <cargo.debug.address>8000</cargo.debug.address>
         <cargo.debug.suspend>n</cargo.debug.suspend>
         <cargo.args/>
-        <cargo.version>1.1.0</cargo.version>
+        <cargo.version>1.2.1</cargo.version>
         <javaagent/>
         <!-- Force maven-filesync-plugin rewrite the Eclipse FileSync plugin configuration with
      $mvn filesync:generate -Dmaven.filesync.override=true -->
