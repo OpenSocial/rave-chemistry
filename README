@@ -1,0 +1,26 @@
+This is primarily a demonstration of a CMIS OpenSocial Gadget that is able to browse a configured CMIS repository.  
+
+This demonstration server uses Apache Rave, Apache Shindig & Apache Chemistry for the OpenSocial container, OpenSocial rendering engine and CMMIS compliant server.  
+
+For more information on the source projects visit:
+
+http://rave.apache.org
+http://shindig.apache.org
+http://chemistry.apache.org
+
+PREREQUISITES 
+
+1) JDK > 1.6
+2) JAVA_HOME environment variable pointing to JDK installation
+3) Maven > 3,0
+
+
+RUNNING THE DEMO
+
+1) Checkout the code
+2) Execute mvn clean install
+3) cd package
+4) mvn carog:start
+5) Browse to http://localhost:8080/
+6) Log in as canonical:canonical
+7) Make sure you are looking at the CMIS tab.
