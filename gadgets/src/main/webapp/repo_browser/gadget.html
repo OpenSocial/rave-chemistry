@@ -8,122 +8,121 @@
         gadgets.io.makeRequest(url, callback, params);
     }
 
-    function buildFolderUrl(url, repo) {
-        return '<div><a onclick="makeCMISRequest(' + "'" + url + "'" + ', buildObjectTree)">' + repo + '</a></div>';
-    }
-
-    function handleRepositoryResponse(response) {
-        var html = '',
-            repos = [];
-
-        for (repo in response.data) {
-            var url = response.data[repo].rootFolderUrl;
-            repos.push(url);
-            currentRepo = url;
-            html = html + buildFolderUrl(url, repo);
-        }
-
-        switch (repos.length) {
-            case 0:
-                detailsElement.innerHTML = "There are no repositories in the configured server";
-                break;
-            case 1:
-                currentRepo = repos[0];
-                makeCMISRequest(repos[0], buildObjectTree);
-                break;
-            default:
-                detailsElement.innerHTML = html;
+    function handleOpenNode(e, data) {
+        var tree = data.inst;
+        var folderElem = data.args[0];
+        if (tree._get_children(folderElem).length == 0) {
+            var path = data.rslt.obj.attr("rel") == "drive" ? "" : "/" + data.rslt.obj.attr("path");
+            var repoUrl = data.rslt.obj.attr("repoUrl");
+            makeCMISRequest(repoUrl + path, function (response) {
+                var nodes = buildNodeList(response, repoUrl).sort(nodeComparator);
+                for (var i = 0; i < nodes.length; i++) {
+                    tree.create_node(folderElem, i, nodes[i]);
+                }
+                gadgets.window.adjustHeight();
+            });
         }
     }
 
-    function buildObjectTree(response) {
-        var objects = response.data.objects,
-                tree = [];
+    function handleSelect(e, data) {
+        if (data.rslt.obj.attr("rel") == "default") {
+            openUrl(data.rslt.obj);
+        }
+    }
+
+    function initializeTree(tree) {
+        if (tree.length == 0) {
+            detailsElement.innerHTML = "There are no repositories in the configured server";
+        } else {
+            $("#details").bind("select_node.jstree", handleSelect)
+                    .bind("open_node.jstree", handleOpenNode)
+                    .bind("loaded.jstree", gadgets.window.adjustHeight)
+                    .jstree({
+                        "themes":{
+                            "dots":false
+                        },
+                        "types":{
+                            "max_depth":-2,
+                            "max_children":-2,
+                            "valid_children":[ "drive", "folder", "default" ],
+                            "types":{
+                                "default":{
+                                    "valid_children":"none",
+                                    "icon":{
+                                        "image":"http://static.jstree.com/v.1.0pre/_demo/file.png"
+                                    }
+                                },
+                                "folder":{
+                                    "valid_children":[ "default", "folder" ],
+                                    "icon":{
+                                        "image":"http://static.jstree.com/v.1.0pre/_demo/folder.png"
+                                    }
+                                },
+                                "drive":{
+                                    "valid_children":[ "default", "folder" ],
+                                    "icon":{
+                                        "image":"http://static.jstree.com/v.1.0pre/_demo/root.png"
+                                    },
+                                    "start_drag":false,
+                                    "move_node":false,
+                                    "delete_node":false,
+                                    "remove":false
+                                }
+                            }
+                        },
+                        "json_data":{
+                            "data":tree,
+                            "progressive_render":false,
+                            "progressive_unload":false
+                        },
+                        "plugins":[ "themes", "json_data", "types", "ui" ]
+                    });
+        }
+    }
+    function buildNodeList(response, repoUrl) {
+        var objects = response.data.objects, tree = [];
         for (var i = 0; i < objects.length; i++) {
             var node, properties = objects[i].object.properties;
-
+            node = {
+                data:{ title:properties["cmis:name"].value },
+                attr:{ objectId:properties["cmis:objectId"].value, repoUrl:repoUrl }
+            };
             if (properties["cmis:objectTypeId"].value == "cmis:folder") {
-                node = {
-                    data:{
-                        title:properties["cmis:name"].value
-                    },
-                    attr: { rel:"folder" },
-                    state: "closed"
-                }
+                node.attr.path = properties["cmis:path"].value;
+                node.attr.rel = "folder";
+                node.state = "closed";
             } else {
-                node = {
-                    data:{
-                        title:properties["cmis:name"].value
-                    },
-                    attr: { rel:"default" }
-                }
+                node.attr.rel = "default";
             }
             tree.push(node);
         }
-        $("#details").jstree({
-            "themes" : {
-                "dots" : false
-            },
-            "types":{
-                "max_depth":-2,
-                "max_children":-2,
-                "valid_children":[ "drive", "folder", "default" ],
-                "types":{
-                    "default":{
-                        "valid_children":"none",
-                        "icon":{
-                            "image":"http://static.jstree.com/v.1.0pre/_demo/file.png"
-                        }
-                    },
-                    "folder":{
-                        "valid_children":[ "default", "folder" ],
-                        "icon":{
-                            "image":"http://static.jstree.com/v.1.0pre/_demo/folder.png"
-                        }
-                    },
-                    "drive":{
-                        "valid_children":[ "default", "folder" ],
-                        "icon":{
-                            "image":"http://static.jstree.com/v.1.0pre/_demo/root.png"
-                        },
-                        "start_drag":false,
-                        "move_node":false,
-                        "delete_node":false,
-                        "remove":false
-                    }
-                }
-            },
-            "json_data":{
-                "data":tree,
-                "progressive_render":true,
-                "progressive_unload":true
-            },
-            "plugins":[ "themes", "json_data", "types", "ui" ]
-        }).bind("select_node.jstree", function(e, data){
-                    debugger;
-                });
-
+        return tree;
+    }
+    function buildRepoList(response) {
+        var nodes = [];
+        for (repo in response.data) {
+            nodes.push({
+                data:{ title:repo},
+                state:"closed",
+                attr:{rel:"drive", repoUrl:response.data[repo].rootFolderUrl}
+            });
+        }
+        return nodes;
     }
 
-    /*
-     function buildObjectTree(response) {
-     debugger;
-     var html = '', objects = response.data.objects;
-     for(var i=0; i<objects.length; i++) {
-     var properties = objects[i].object.properties;
-     if(properties["cmis:objectTypeId"].value == "cmis:folder") {
-     html += buildFolderUrl(currentRepo + "/" + properties["cmis:path"].value, properties["cmis:name"].value);
-     } else {
-     html += '<div><a onclick="openUrl(' + "'" + properties["cmis:objectId"].value + "'" + ');">' + properties["cmis:name"].value + '</div>';
-     }
-     }
-     detailsElement.innerHTML = html;
-     }
-     */
+    function openUrl(obj) {
+        var url = obj.attr("repoUrl") + '?objectId=' + obj.attr("objectId");
+        gadgets.views.openUrl(url, function () {
+        }, "dialog");
+    }
 
-    function openUrl(objId) {
-        var url = currentRepo + '?objectId=' + objId;
-        gadgets.views.openUrl(url, null, "dialog");
+    function nodeComparator(a, b) {
+        var aType = a.attr.rel, bType= b.attr.rel;
+        if(aType == bType) {
+            return a.data.title.localeCompare(b.data.title);
+        } else {
+            return aType == "folder" ? -1 : 1;
+        }
     }
 
     gadgets.util.registerOnLoadHandler(function () {
@@ -131,12 +130,15 @@
         var prefs = new gadgets.Prefs();
         var cmisServer = prefs.getString('cmisServer');
         detailsElement = document.getElementById('details');
-        makeCMISRequest(cmisServer, handleRepositoryResponse);
+        makeCMISRequest(cmisServer, function (response) {
+            initializeTree(buildRepoList(response))
+        });
     });
 </script>
 <div id="details">
 
 </div>
-<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>
+<!--<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js'></script>-->
+<script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js'></script>
 <script type='text/javascript' src="http://static.jstree.com/v.1.0pre/jquery.jstree.js"></script>
 <script type='text/javascript' src="http://static.jstree.com/v.1.0pre/jquery.hotkeys.js"></script>
