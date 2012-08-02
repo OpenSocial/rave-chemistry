@@ -1,4 +1,16 @@
--- Friends Gadget
+--Removing everything except for CMIS widget & Canonical page with it installed
+
+delete from page_user;
+delete from region_widget;
+delete from region;
+delete from page;
+delete from page_template_widget;
+delete from widget_category;
+delete from widget_rating;
+delete from widget_tag;
+delete from widget;
+
+-- CMIS Gadget
 set @repository_browser = (SELECT seq_count FROM RAVE_PORTAL_SEQUENCES WHERE seq_name = @widget_seq);
 insert into widget (entity_id, title, url, type, widget_status, description, author, owner_id)
 values(@repository_browser, 'CMIS Repository Browser', 'http://localhost:8080/demogadgets/repo_browser/repo_browser.xml', 'OpenSocial', 'PUBLISHED', 'Browse a CMIS repository and download files.', 'Ryan J. Baxter', @user_id_1);
