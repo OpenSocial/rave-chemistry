@@ -12,7 +12,7 @@ PREREQUISITES
 
 1) JDK > 1.6
 2) JAVA_HOME environment variable pointing to JDK installation
-3) Maven > 3,0
+3) Maven > 3.0
 
 
 RUNNING THE DEMO
@@ -20,7 +20,7 @@ RUNNING THE DEMO
 1) Checkout the code
 2) Execute mvn clean install
 3) cd package
-4) mvn carog:start
+4) mvn cargo:start
 5) Browse to http://localhost:8080/
 6) Log in as canonical:canonical
 7) Make sure you are looking at the CMIS tab.
