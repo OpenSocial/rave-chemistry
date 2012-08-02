@@ -13,7 +13,7 @@
     <artifactId>rave-chemistry-package</artifactId>
     <name>Apache Rave &amp; Chemistry Integration Packager</name>
     <description>Packaging and running of the integrated piece</description>
-    <packaging>war</packaging>
+    <packaging>pom</packaging>
 
     <properties>
         <javax.mail.version>1.4.4</javax.mail.version>
